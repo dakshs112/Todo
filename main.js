@@ -9,7 +9,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 app.set("view engine", "ejs")
 
-// Ensure files directory exists
 const filesDir = path.join(__dirname, 'files');
 if (!fs.existsSync(filesDir)) {
     fs.mkdirSync(filesDir, { recursive: true });
@@ -84,7 +83,6 @@ app.get('/delete/:filename', function(req, res) {
     })
 })
 
-// Fix port configuration
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`)
