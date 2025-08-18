@@ -4,20 +4,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>TaskBuddy - View Task</title>
     <link rel="stylesheet" href="/stylesheets/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Enhanced dark theme styles for show page */
+        .content-display {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .content-display:hover {
+            border-left-color: var(--accent-secondary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .action-button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .back-button {
+            background: linear-gradient(135deg, var(--border-secondary) 0%, var(--border-primary) 100%);
+        }
+
+        .back-button:hover {
+            background: linear-gradient(135deg, var(--accent-tertiary) 0%, var(--accent-primary) 100%);
+        }
+    </style>
 </head>
 
-<body>
-    <div class="main w-full min-h-screen bg-zinc-900 p-8">
-        <a href="/" class="text-blue-600 inline-block mb-10">Go back to home page</a>
-        <h1 class="text-white text-3xl tracking-tight"><%= filename%></h1>
-        <p class="text-xl text-gray-500 mt-3 font-light"><%= filedata%></p>
+<body class="font-inter">
+    <!-- Header -->
+    <header class="header-gradient text-white py-6 shadow-modern-xl backdrop-blur-strong">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4 animate-slide-in-left">
+                    <div class="w-12 h-12 feature-icon rounded-xl flex items-center justify-center floating-element">
+                        <i class="fas fa-tasks text-xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold gradient-text">TaskBuddy</h1>
+                        <p class="text-sm text-blue-200 opacity-90">Task Details</p>
+                    </div>
+                </div>
+                <a href="/" class="flex items-center text-white hover:text-blue-200 transition-all duration-300 interactive-hover animate-slide-in-right">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    <span class="hidden sm:inline font-medium">Back to Tasks</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content py-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="animate-fade-in">
+                <!-- Task Header -->
+                <div class="content-card rounded-3xl p-8 shadow-modern-xl mb-10 glow-on-hover animate-fade-in">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+                        <div class="flex items-center mb-6 sm:mb-0">
+                            <div class="w-16 h-16 feature-icon rounded-2xl flex items-center justify-center mr-6 floating-element">
+                                <i class="fas fa-file-alt text-white text-2xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h1 class="text-3xl sm:text-4xl font-bold text-white mb-3">
+                                    <%= filename.replace('.txt', '') %>
+                                </h1>
+                                <div class="flex items-center text-gray-300">
+                                    <i class="fas fa-calendar-alt mr-2 text-blue-400"></i>
+                                    <span class="font-medium">Task Details</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <a href="/edit/<%= filename %>" class="action-button flex items-center px-6 py-3 bg-yellow-500 bg-opacity-20 hover:bg-opacity-30 text-yellow-400 rounded-xl transition-all duration-300 font-semibold">
+                                <i class="fas fa-edit mr-2"></i>
+                                <span class="hidden sm:inline">Edit</span>
+                            </a>
+                            <a href="/delete/<%= filename %>"
+                               onclick="return confirm('Are you sure you want to delete this task?')"
+                               class="action-button flex items-center px-6 py-3 bg-red-500 bg-opacity-20 hover:bg-opacity-30 text-red-400 rounded-xl transition-all duration-300 font-semibold">
+                                <i class="fas fa-trash mr-2"></i>
+                                <span class="hidden sm:inline">Delete</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Content -->
+                <div class="content-card rounded-3xl p-8 shadow-modern-xl glow-on-hover animate-slide-up">
+                    <div class="flex items-center mb-8">
+                        <div class="w-12 h-12 feature-icon rounded-xl flex items-center justify-center mr-5">
+                            <i class="fas fa-align-left text-white text-lg"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-white">Task Description</h2>
+                    </div>
+
+                    <div class="content-display rounded-2xl p-8 backdrop-blur-medium">
+                        <p class="text-gray-200 leading-relaxed text-lg whitespace-pre-wrap font-medium"><%= filedata %></p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-center mt-12 space-y-4 sm:space-y-0 sm:space-x-6 animate-bounce-in">
+                    <a href="/" class="w-full sm:w-auto flex items-center justify-center px-8 py-4 back-button text-white rounded-xl transition-all duration-300 font-semibold text-lg interactive-hover">
+                        <i class="fas fa-arrow-left mr-3"></i>
+                        Back to Tasks
+                    </a>
+                    <a href="/edit/<%= filename %>" class="w-full sm:w-auto flex items-center justify-center px-8 py-4 btn-primary text-white rounded-xl transition-all duration-300 font-semibold text-lg glow-on-hover">
+                        <i class="fas fa-edit mr-3"></i>
+                        Edit Task
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
-
-    <script src="/javascripts/script.js"></script>
+    <!-- Footer -->
+    <footer class="footer-dark text-white py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-6 animate-fade-in">
+                <div class="w-12 h-12 feature-icon rounded-xl flex items-center justify-center mr-4 floating-element">
+                    <i class="fas fa-tasks text-white text-lg"></i>
+                </div>
+                <span class="text-2xl font-bold gradient-text">TaskBuddy</span>
+            </div>
+            <p class="text-gray-300 text-lg mb-4">Organize your life, one task at a time</p>
+            <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-6"></div>
+            <p class="text-gray-500 text-sm">Built with ❤️ for productivity enthusiasts</p>
+        </div>
+    </footer>
 </body>
 
 </html>

@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskBuddy - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer-when-downgrade"></script>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-in-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'bounce-in': 'bounceIn 0.8s ease-out',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Enhanced dashboard styles */
+        .dashboard-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+        
+        .stat-card {
+            background: var(--gradient-card);
+            border: 1px solid var(--border-primary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-secondary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-primary);
+        }
+        
+        .nav-item {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin: 4px 0;
+        }
+        
+        .nav-item:hover {
+            background: var(--bg-card);
+            transform: translateX(4px);
+        }
+        
+        .nav-item.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+        
+        .user-avatar {
+            background: var(--gradient-secondary);
+            border: 2px solid var(--border-primary);
+        }
+        
+        .quick-action {
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-card);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body class="font-inter">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar w-64 flex-shrink-0 hidden lg:block">
+            <div class="p-6">
+                <!-- Logo -->
+                <div class="flex items-center mb-8">
+                    <div class="w-10 h-10 feature-icon rounded-xl flex items-center justify-center mr-3">
+                        <i class="fas fa-tasks text-white text-lg"></i>
+                    </div>
+                    <span class="text-xl font-bold gradient-text">TaskBuddy</span>
+                </div>
+
+                <!-- User Info -->
+                <div class="mb-8 p-4 dashboard-card rounded-xl">
+                    <div class="flex items-center">
+                        <div class="user-avatar w-12 h-12 rounded-xl flex items-center justify-center mr-3">
+                            <span class="text-white font-bold text-lg">
+                                <%= user.name.charAt(0).toUpperCase() %>
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-semibold"><%= user.name %></h3>
+                            <p class="text-gray-400 text-sm capitalize"><%= user.role.replace('_', ' ') %></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="space-y-2">
+                    <a href="/dashboard" class="nav-item active flex items-center px-4 py-3 text-white">
+                        <i class="fas fa-home mr-3"></i>
+                        Dashboard
+                    </a>
+                    <a href="/teams" class="nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white">
+                        <i class="fas fa-users mr-3"></i>
+                        Teams
+                    </a>
+                    <a href="/projects" class="nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white">
+                        <i class="fas fa-folder mr-3"></i>
+                        Projects
+                    </a>
+                    <a href="/tasks" class="nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white">
+                        <i class="fas fa-tasks mr-3"></i>
+                        Tasks
+                    </a>
+                    <% if (user.role === 'admin' || user.hasPermission('canManageUsers')) { %>
+                    <a href="/admin" class="nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white">
+                        <i class="fas fa-cog mr-3"></i>
+                        Admin
+                    </a>
+                    <% } %>
+                </nav>
+
+                <!-- Logout -->
+                <div class="absolute bottom-6 left-6 right-6">
+                    <a href="/logout" class="nav-item flex items-center px-4 py-3 text-gray-300 hover:text-red-400">
+                        <i class="fas fa-sign-out-alt mr-3"></i>
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-hidden">
+            <!-- Header -->
+            <header class="header-gradient text-white py-4 px-6 shadow-modern-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold">Welcome back, <%= user.name.split(' ')[0] %>!</h1>
+                        <p class="text-blue-200 opacity-90">Here's what's happening with your projects today.</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm opacity-90 hidden sm:block backdrop-blur-medium bg-white bg-opacity-10 px-3 py-2 rounded-lg">
+                            <i class="fas fa-clock mr-2 text-blue-200"></i>
+                            <span id="current-time" class="text-white font-medium"></span>
+                        </div>
+                        <button class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center interactive-hover">
+                            <i class="fas fa-bell text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="p-6 overflow-y-auto h-full">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card p-6 rounded-xl shadow-modern-lg animate-fade-in">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm font-medium">Total Teams</p>
+                                <p class="text-2xl font-bold text-white"><%= teams.length %></p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-500 bg-opacity-20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-users text-blue-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card p-6 rounded-xl shadow-modern-lg animate-fade-in" style="animation-delay: 0.1s;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm font-medium">Active Projects</p>
+                                <p class="text-2xl font-bold text-white"><%= projects.filter(p => p.status === 'active').length %></p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-folder text-green-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card p-6 rounded-xl shadow-modern-lg animate-fade-in" style="animation-delay: 0.2s;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm font-medium">Pending Tasks</p>
+                                <p class="text-2xl font-bold text-white"><%= tasks.filter(t => t.status !== 'completed').length %></p>
+                            </div>
+                            <div class="w-12 h-12 bg-yellow-500 bg-opacity-20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-tasks text-yellow-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card p-6 rounded-xl shadow-modern-lg animate-fade-in" style="animation-delay: 0.3s;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm font-medium">Completed Tasks</p>
+                                <p class="text-2xl font-bold text-white"><%= tasks.filter(t => t.status === 'completed').length %></p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-500 bg-opacity-20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-check-circle text-purple-400 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mb-8 animate-slide-up">
+                    <h2 class="text-xl font-bold text-white mb-4">Quick Actions</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <% if (user.hasPermission('canCreateTeams')) { %>
+                        <button class="quick-action p-4 rounded-xl text-center interactive-hover">
+                            <i class="fas fa-plus-circle text-2xl text-blue-400 mb-2"></i>
+                            <p class="text-white font-medium">Create Team</p>
+                        </button>
+                        <% } %>
+                        <button class="quick-action p-4 rounded-xl text-center interactive-hover">
+                            <i class="fas fa-folder-plus text-2xl text-green-400 mb-2"></i>
+                            <p class="text-white font-medium">New Project</p>
+                        </button>
+                        <button class="quick-action p-4 rounded-xl text-center interactive-hover">
+                            <i class="fas fa-plus text-2xl text-yellow-400 mb-2"></i>
+                            <p class="text-white font-medium">Add Task</p>
+                        </button>
+                        <button class="quick-action p-4 rounded-xl text-center interactive-hover">
+                            <i class="fas fa-user-plus text-2xl text-purple-400 mb-2"></i>
+                            <p class="text-white font-medium">Invite Member</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Recent Projects -->
+                    <div class="dashboard-card p-6 rounded-xl shadow-modern-lg animate-slide-up">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-white">Recent Projects</h3>
+                            <a href="/projects" class="text-blue-400 hover:text-blue-300 text-sm font-medium">View All</a>
+                        </div>
+                        <div class="space-y-3">
+                            <% if (projects.length > 0) { %>
+                                <% projects.slice(0, 5).forEach(project => { %>
+                                <div class="flex items-center justify-between p-3 bg-gray-700 bg-opacity-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
+                                            <i class="fas fa-folder text-blue-400 text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-white font-medium"><%= project.title %></p>
+                                            <p class="text-gray-400 text-xs">
+                                                <% if (project.team && project.team.name) { %>
+                                                    <i class="fas fa-users mr-1"></i><%= project.team.name %>
+                                                <% } else { %>
+                                                    <i class="fas fa-user mr-1"></i>Personal Project
+                                                <% } %>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 bg-<%= project.status === 'active' ? 'green' : 'gray' %>-500 bg-opacity-20 text-<%= project.status === 'active' ? 'green' : 'gray' %>-400 rounded-full">
+                                        <%= project.status %>
+                                    </span>
+                                </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-center py-8">
+                                    <i class="fas fa-folder text-gray-500 text-3xl mb-3"></i>
+                                    <p class="text-gray-400">No projects yet</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Recent Tasks -->
+                    <div class="dashboard-card p-6 rounded-xl shadow-modern-lg animate-slide-up" style="animation-delay: 0.1s;">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-white">Recent Tasks</h3>
+                            <a href="/tasks" class="text-blue-400 hover:text-blue-300 text-sm font-medium">View All</a>
+                        </div>
+                        <div class="space-y-3">
+                            <% if (tasks.length > 0) { %>
+                                <% tasks.slice(0, 5).forEach(task => { %>
+                                <div class="flex items-center justify-between p-3 bg-gray-700 bg-opacity-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-yellow-500 bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
+                                            <i class="fas fa-tasks text-yellow-400 text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-white font-medium"><%= task.title %></p>
+                                            <p class="text-gray-400 text-xs"><%= task.project.title %></p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 bg-<%= task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'yellow' : 'green' %>-500 bg-opacity-20 text-<%= task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'yellow' : 'green' %>-400 rounded-full">
+                                        <%= task.priority %>
+                                    </span>
+                                </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-center py-8">
+                                    <i class="fas fa-tasks text-gray-500 text-3xl mb-3"></i>
+                                    <p class="text-gray-400">No tasks yet</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Create Team Modal -->
+    <div id="createTeamModal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="modal-content rounded-3xl p-8 max-w-md w-full animate-bounce-in">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-users text-blue-400 text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2">Create New Team</h3>
+                <p class="text-gray-300">Start collaborating with your team members</p>
+            </div>
+
+            <form id="createTeamForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Team Name</label>
+                    <input type="text" id="teamName" name="name" required
+                           class="w-full px-4 py-3 form-input rounded-xl focus-ring text-lg"
+                           placeholder="Enter team name">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Description</label>
+                    <textarea id="teamDescription" name="description" rows="3"
+                              class="w-full px-4 py-3 form-input rounded-xl focus-ring resize-none"
+                              placeholder="Describe your team's purpose"></textarea>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create Team
+                    </button>
+                    <button type="button" onclick="closeModal('createTeamModal')"
+                            class="flex-1 bg-transparent border border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div id="createProjectModal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="modal-content rounded-3xl p-8 max-w-md w-full animate-bounce-in">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-green-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-folder-plus text-green-400 text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2">Create New Project</h3>
+                <p class="text-gray-300">Organize your work into projects</p>
+            </div>
+
+            <form id="createProjectForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Project Title</label>
+                    <input type="text" id="projectTitle" name="title" required
+                           class="w-full px-4 py-3 form-input rounded-xl focus-ring text-lg"
+                           placeholder="Enter project title">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Description</label>
+                    <textarea id="projectDescription" name="description" rows="3"
+                              class="w-full px-4 py-3 form-input rounded-xl focus-ring resize-none"
+                              placeholder="Describe your project"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">Start Date</label>
+                        <input type="date" id="projectStartDate" name="startDate"
+                               class="w-full px-4 py-3 form-input rounded-xl focus-ring"
+                               value="<%= new Date().toISOString().split('T')[0] %>">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">End Date</label>
+                        <input type="date" id="projectEndDate" name="endDate"
+                               class="w-full px-4 py-3 form-input rounded-xl focus-ring"
+                               value="<%= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] %>">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Team (Optional)</label>
+                    <select id="projectTeam" name="team" class="w-full px-4 py-3 form-input rounded-xl focus-ring">
+                        <option value="">Select a team</option>
+                        <% teams.forEach(team => { %>
+                            <option value="<%= team._id %>"><%= team.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create Project
+                    </button>
+                    <button type="button" onclick="closeModal('createProjectModal')"
+                            class="flex-1 bg-transparent border border-gray-600 hover:border-green-500 text-gray-300 hover:text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="modal-content rounded-3xl p-8 max-w-md w-full animate-bounce-in">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-yellow-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-plus text-yellow-400 text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2">Add New Task</h3>
+                <p class="text-gray-300">Create a task to track your work</p>
+            </div>
+
+            <form id="addTaskForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Task Title</label>
+                    <input type="text" id="taskTitle" name="title" required
+                           class="w-full px-4 py-3 form-input rounded-xl focus-ring text-lg"
+                           placeholder="Enter task title">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Description</label>
+                    <textarea id="taskDescription" name="description" rows="3"
+                              class="w-full px-4 py-3 form-input rounded-xl focus-ring resize-none"
+                              placeholder="Describe the task"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Project (Optional)</label>
+                    <select id="taskProject" name="project" class="w-full px-4 py-3 form-input rounded-xl focus-ring">
+                        <option value="">Select a project</option>
+                        <% projects.forEach(project => { %>
+                            <option value="<%= project._id %>"><%= project.title %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">Priority</label>
+                        <select id="taskPriority" name="priority" class="w-full px-4 py-3 form-input rounded-xl focus-ring">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">Due Date (Optional)</label>
+                        <input type="date" id="taskDueDate" name="dueDate"
+                               class="w-full px-4 py-3 form-input rounded-xl focus-ring">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Add Task
+                    </button>
+                    <button type="button" onclick="closeModal('addTaskModal')"
+                            class="flex-1 bg-transparent border border-gray-600 hover:border-yellow-500 text-gray-300 hover:text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invite Member Modal -->
+    <div id="inviteMemberModal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="modal-content rounded-3xl p-8 max-w-md w-full animate-bounce-in">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-purple-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-plus text-purple-400 text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2">Invite Team Member</h3>
+                <p class="text-gray-300">Add someone to your team</p>
+            </div>
+
+            <form id="inviteMemberForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Email Address</label>
+                    <input type="email" id="memberEmail" name="email" required
+                           class="w-full px-4 py-3 form-input rounded-xl focus-ring text-lg"
+                           placeholder="Enter email address">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Team</label>
+                    <select id="inviteTeam" name="team" required class="w-full px-4 py-3 form-input rounded-xl focus-ring">
+                        <option value="">Select a team</option>
+                        <% teams.filter(team => team.owner.toString() === user.id).forEach(team => { %>
+                            <option value="<%= team._id %>"><%= team.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Role</label>
+                    <select id="memberRole" name="role" class="w-full px-4 py-3 form-input rounded-xl focus-ring">
+                        <option value="member">Member</option>
+                        <option value="manager">Manager</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-paper-plane mr-2"></i>Send Invite
+                    </button>
+                    <button type="button" onclick="closeModal('inviteMemberModal')"
+                            class="flex-1 bg-transparent border border-gray-600 hover:border-purple-500 text-gray-300 hover:text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: true, 
+                hour: 'numeric', 
+                minute: '2-digit' 
+            });
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = timeString;
+            }
+        }
+        
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Modal functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                // Reset form
+                const form = modal.querySelector('form');
+                if (form) form.reset();
+            }
+        }
+
+        // Add click handlers for quick actions
+        document.querySelectorAll('.quick-action').forEach(button => {
+            button.addEventListener('click', function() {
+                const text = this.querySelector('p').textContent.trim();
+
+                switch(text) {
+                    case 'Create Team':
+                        openModal('createTeamModal');
+                        break;
+                    case 'New Project':
+                        openModal('createProjectModal');
+                        break;
+                    case 'Add Task':
+                        openModal('addTaskModal');
+                        break;
+                    case 'Invite Member':
+                        openModal('inviteMemberModal');
+                        break;
+                    default:
+                        console.log('Unknown action:', text);
+                }
+            });
+        });
+
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+
+        // Helper function to clean form data (remove empty strings)
+        function cleanFormData(formData) {
+            const data = Object.fromEntries(formData);
+            const cleanedData = {};
+
+            for (const [key, value] of Object.entries(data)) {
+                if (value && value.toString().trim() !== '') {
+                    cleanedData[key] = value;
+                }
+            }
+
+            return cleanedData;
+        }
+
+        // Form submission handlers
+        document.getElementById('createTeamForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = cleanFormData(formData);
+
+            try {
+                const response = await fetch('/api/v1/teams', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('createTeamModal');
+                    location.reload(); // Refresh to show new team
+                } else {
+                    const error = await response.json();
+                    alert('Error creating team: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error creating team. Please try again.');
+            }
+        });
+
+        document.getElementById('createProjectForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = cleanFormData(formData);
+
+            try {
+                const response = await fetch('/api/v1/projects', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('createProjectModal');
+                    location.reload(); // Refresh to show new project
+                } else {
+                    const error = await response.json();
+                    alert('Error creating project: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error creating project. Please try again.');
+            }
+        });
+
+        document.getElementById('addTaskForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = cleanFormData(formData);
+
+            try {
+                const response = await fetch('/api/v1/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('addTaskModal');
+                    location.reload(); // Refresh to show new task
+                } else {
+                    const error = await response.json();
+                    alert('Error creating task: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error creating task. Please try again.');
+            }
+        });
+
+        document.getElementById('inviteMemberForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = cleanFormData(formData);
+
+            if (!data.team) {
+                alert('Please select a team to invite the member to.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/teams/${data.team}/invite`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: data.email, role: data.role || 'member' })
+                });
+
+                if (response.ok) {
+                    closeModal('inviteMemberModal');
+                    alert('Invitation sent successfully!');
+                } else {
+                    const error = await response.json();
+                    alert('Error sending invitation: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error sending invitation. Please try again.');
+            }
+        });
+
+        // Logout function
+        function logoutUser() {
+            console.log('Logout function called');
+
+            // Try multiple logout methods
+            fetch('/api/v1/auth/logout', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => {
+                console.log('API logout response:', response.status);
+                // Regardless of API response, redirect to logout page
+                window.location.href = '/auth/logout';
+            })
+            .catch(error => {
+                console.log('API logout failed, using direct logout:', error);
+                // If API fails, use direct logout
+                window.location.href = '/auth/logout';
+            });
+        }
+
+        // Expose functions globally
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.logoutUser = logoutUser;
+    </script>
+</body>
+</html>

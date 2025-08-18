@@ -1,48 +1,632 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>TaskBuddy - Modern Task Management</title>
+    <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer-when-downgrade"></script>
     <link rel="stylesheet" href="/stylesheets/style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Additional custom styles for enhanced dark theme */
+        .hero-section {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .feature-icon {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .empty-state {
+            background: var(--bg-card);
+            border: 2px dashed var(--border-primary);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .empty-state:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-card-hover);
+        }
+
+        .footer-dark {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        /* Enhanced form styling */
+        .form-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            backdrop-filter: blur(20px);
+        }
+
+        .form-container:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Warning and notification styles */
+        .warning-banner {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fbbf24;
+        }
+
+        .info-banner {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .task-counter {
+            background: linear-gradient(135deg, var(--accent-warning) 0%, #d97706 100%);
+            color: white;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+    </style>
 </head>
 
-<body>
-    <div class="main w-full min-h-screen bg-zinc-900">
-        <div class="form p-10 text-white">
-            <form action="/create" method="post">
-                <input class=" block px-5 py-3 bg-zinc-800 w-full rounded-md " type="text"
-                    placeholder="Input your title here" name="title">
-                <textarea class=" block mt-5 px-5 py-3 bg-zinc-800 resize-none w-full rounded-md "
-                    placeholder="Write down the details of your Task" name="details"></textarea>
-                <input class="mt-5 bg-green-800 rounded-md px-3 py-2" type="submit" placeholder="Create Task">
-
-            </form>
+<body class="font-inter">
+    <!-- Header -->
+    <header class="header-gradient text-white py-6 shadow-modern-xl backdrop-blur-strong">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4 animate-slide-in-left">
+                    <div class="w-12 h-12 feature-icon rounded-xl flex items-center justify-center floating-element">
+                        <i class="fas fa-tasks text-xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold gradient-text">TaskBuddy</h1>
+                        <p class="text-sm text-blue-200 opacity-90">Modern Task Management</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 animate-slide-in-right">
+                    <div class="text-sm opacity-90 hidden sm:block backdrop-blur-medium bg-white bg-opacity-10 px-3 py-2 rounded-lg">
+                        <i class="fas fa-clock mr-2 text-blue-200"></i>
+                        <span id="current-time" class="text-white font-medium"></span>
+                    </div>
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-white font-medium hidden sm:inline">Welcome, <%= user.name.split(' ')[0] %></span>
+                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">
+                                    <%= user.name.charAt(0).toUpperCase() %>
+                                </span>
+                            </div>
+                            <a href="/auth/logout" class="text-white hover:text-blue-200 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </a>
+                        </div>
+                    <% } else { %>
+                        <div class="flex items-center space-x-3">
+                            <a href="/auth/login" class="text-white hover:text-blue-200 transition-colors font-medium">
+                                <i class="fas fa-sign-in-alt mr-2"></i>Login
+                            </a>
+                            <a href="/auth/register" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors font-medium">
+                                <i class="fas fa-user-plus mr-2"></i>Sign Up
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
         </div>
-        <div class="tasks p-10 flex flex-wrap ">
-            <% if (files.length>0){ %>
-                <% files.forEach(function(val){ %>
-                    
-                    <div class="task bg-zinc-800 min-w-72 rounded-md px-3 py-3 m-2 ">
-                        <h1 class="text-white text-2xl tracking-tighter"><%= val%></h1>
-                        <div class=" w-full flex justify-between items-center mt-3">
-                            <a class="text-blue-700 inline-block " href="/file/<%=val %>"> Read More</a>
-                            <a class="text-white bg-red-500 rounded-xl px-2 py-1" href="/delete/<%=val%>" onclick="return confirm('Are you sure you want to delete this file?');" >delete</a>
-                            <a class="text-zinc-600" href="/edit/<%=val%>">edit</a>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Success/Error Messages -->
+            <div class="max-w-4xl mx-auto mb-8">
+                <!-- Success Message -->
+                <div id="success-message" class="hidden info-banner rounded-2xl p-6 shadow-modern-lg mb-4 animate-bounce-in">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
+                            <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-green-300 mb-1">Task Created Successfully!</h3>
+                            <p class="text-green-200">Your task has been saved and is now available in your task list.</p>
                         </div>
                     </div>
-                <%}) %>
-            <%} else{ %>
-                    <h2 class="text-gray-500">No tasks yet</h2>
+                </div>
 
-            <% }%>
+                <!-- Error Messages -->
+                <div id="error-message" class="hidden warning-banner rounded-2xl p-6 shadow-modern-lg mb-4 animate-bounce-in">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-red-500 bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
+                            <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-red-300 mb-1">Error</h3>
+                            <p id="error-text" class="text-red-200">An error occurred while creating your task.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guest User Warning Banner -->
+            <% if (typeof user === 'undefined' || !user) { %>
+                <div id="guest-warning" class="max-w-4xl mx-auto mb-8 animate-fade-in">
+                    <div class="warning-banner rounded-2xl p-6 shadow-modern-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-yellow-500 bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
+                                    <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-yellow-300 mb-1">Guest Mode - Limited Access</h3>
+                                    <p class="text-yellow-200">You can create up to <span class="font-bold">2 tasks</span> without logging in. <span id="tasks-remaining" class="task-counter">2 remaining</span></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <a href="/auth/login" class="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-lg font-semibold transition-colors">
+                                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                                </a>
+                                <a href="/auth/register" class="bg-transparent border border-yellow-500 hover:bg-yellow-500 hover:text-black text-yellow-400 px-4 py-2 rounded-lg font-semibold transition-colors">
+                                    <i class="fas fa-user-plus mr-2"></i>Sign Up
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Create Task Section -->
+            <div class="max-w-4xl mx-auto mb-16 animate-fade-in">
+                <div class="form-container rounded-3xl p-8 shadow-modern-xl glow-on-hover">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center">
+                            <div class="w-14 h-14 feature-icon rounded-2xl flex items-center justify-center mr-5 floating-element">
+                                <i class="fas fa-plus text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-3xl font-bold text-white mb-2">Create New Task</h2>
+                                <p class="text-gray-300">Organize your thoughts and boost productivity</p>
+                            </div>
+                        </div>
+                        <% if (typeof user !== 'undefined' && user) { %>
+                            <div class="text-right">
+                                <p class="text-green-400 font-semibold">
+                                    <i class="fas fa-check-circle mr-2"></i>Unlimited Tasks
+                                </p>
+                                <p class="text-gray-400 text-sm">Logged in as <%= user.name %></p>
+                            </div>
+                        <% } else { %>
+                            <div class="text-right">
+                                <p class="text-yellow-400 font-semibold">
+                                    <i class="fas fa-hourglass-half mr-2"></i>Guest Mode
+                                </p>
+                                <p class="text-gray-400 text-sm">Limited to 2 tasks</p>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <form id="task-form" action="/create" method="post" class="space-y-6">
+                        <div class="animate-slide-up" style="animation-delay: 0.1s;">
+                            <label class="block text-sm font-semibold text-gray-200 mb-3">
+                                <i class="fas fa-heading mr-2 text-blue-400"></i>Task Title
+                            </label>
+                            <input
+                                id="title"
+                                class="w-full px-5 py-4 form-input rounded-xl focus-ring text-lg font-medium"
+                                type="text"
+                                placeholder="What needs to be done?"
+                                name="title"
+                                required
+                            >
+                        </div>
+
+                        <div class="animate-slide-up" style="animation-delay: 0.2s;">
+                            <label class="block text-sm font-semibold text-gray-200 mb-3">
+                                <i class="fas fa-align-left mr-2 text-purple-400"></i>Task Details
+                            </label>
+                            <textarea
+                                id="details"
+                                class="w-full px-5 py-4 form-input rounded-xl focus-ring resize-none text-lg"
+                                rows="5"
+                                placeholder="Describe your task in detail..."
+                                name="details"
+                                required
+                            ></textarea>
+                        </div>
+
+                        <div class="animate-slide-up" style="animation-delay: 0.3s;">
+                            <button
+                                type="submit"
+                                id="create-task-btn"
+                                class="w-full btn-primary text-white py-4 px-8 rounded-xl font-bold text-lg shadow-modern-lg glow-on-hover"
+                            >
+                                <i class="fas fa-plus mr-3"></i>Create Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tasks Section -->
+            <div class="max-w-7xl mx-auto animate-slide-up">
+                <div class="flex items-center mb-10 animate-bounce-in">
+                    <div class="w-12 h-12 feature-icon rounded-xl flex items-center justify-center mr-5 floating-element">
+                        <i class="fas fa-list-check text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-bold text-white mb-2">Your Tasks</h2>
+                        <p class="text-gray-300">Manage and organize your tasks efficiently</p>
+                    </div>
+                </div>
+
+                <% if (files.length > 0) { %>
+                    <div class="task-grid">
+                        <% files.forEach(function(val, index) { %>
+                        <div class="task-card p-7 rounded-2xl shadow-modern-xl card-hover glow-on-hover animate-fade-in" style="animation-delay: <%= index * 0.1 %>s;">
+                                <div class="flex items-start justify-between mb-6">
+                                    <div class="flex-1">
+                                        <div class="flex items-center mb-3">
+                                            <div class="status-dot status-active"></div>
+                                            <span class="text-xs font-semibold text-green-400 uppercase tracking-wider">Active</span>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-white mb-3 line-clamp-2">
+                                            <%
+                                                let displayTitle = val.replace('.txt', '');
+                                                // Clean up guest task titles
+                                                if (displayTitle.startsWith('guest_')) {
+                                                    // Extract the actual title from guest_timestamp_title format
+                                                    const parts = displayTitle.split('_');
+                                                    if (parts.length >= 3) {
+                                                        displayTitle = parts.slice(2).join('_').replace(/_/g, ' ');
+                                                    } else {
+                                                        displayTitle = displayTitle.replace(/guest_\d+_/, '').replace(/_/g, ' ');
+                                                    }
+                                                }
+                                            %>
+                                            <%= displayTitle %>
+                                        </h3>
+                                        <div class="flex items-center text-sm text-gray-400">
+                                            <% if (val.startsWith('guest_')) { %>
+                                                <i class="fas fa-user-clock mr-2 text-yellow-400"></i>
+                                                <span>Guest Task</span>
+                                            <% } else { %>
+                                                <i class="fas fa-calendar-alt mr-2 text-blue-400"></i>
+                                                <span>Created recently</span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <div class="w-10 h-10 feature-icon rounded-xl flex items-center justify-center ml-4 interactive-hover">
+                                        <i class="fas fa-file-alt text-white text-sm"></i>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-6 border-t border-gray-600">
+                                    <a href="/file/<%= val %>" class="flex items-center text-blue-400 hover:text-blue-300 font-semibold transition-all duration-300 interactive-hover">
+                                        <i class="fas fa-eye mr-2"></i>View Task
+                                    </a>
+                                    <div class="flex items-center space-x-3">
+                                        <a href="/edit/<%= val %>" class="w-10 h-10 bg-yellow-500 bg-opacity-20 hover:bg-opacity-30 rounded-xl flex items-center justify-center transition-all duration-300 interactive-hover">
+                                            <i class="fas fa-edit text-yellow-400 text-sm"></i>
+                                        </a>
+                                        <a href="/delete/<%= val %>"
+                                           onclick="return confirm('Are you sure you want to delete this task?')"
+                                           class="w-10 h-10 bg-red-500 bg-opacity-20 hover:bg-opacity-30 rounded-xl flex items-center justify-center transition-all duration-300 interactive-hover">
+                                            <i class="fas fa-trash text-red-400 text-sm"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state text-center py-20 animate-bounce-in">
+                        <div class="w-32 h-32 feature-icon rounded-full flex items-center justify-center mx-auto mb-8 floating-element">
+                            <i class="fas fa-inbox text-white text-4xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-4">No tasks yet</h3>
+                        <p class="text-gray-400 text-lg mb-6">Create your first task to get started on your productivity journey!</p>
+                        <div class="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto"></div>
+                    </div>
+                <% } %>
+            </div>
         </div>
     </div>
 
+    <!-- Task Limit Modal -->
+    <div id="task-limit-modal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="modal-content rounded-3xl p-8 max-w-md w-full animate-bounce-in">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-4">Task Limit Reached</h3>
+                <p class="text-gray-300 mb-6">You've reached the maximum of <span class="font-bold text-yellow-400">2 tasks</span> for guest users. Please sign up or log in to create unlimited tasks and access advanced features.</p>
 
-    <script src="/javascripts/script.js"></script>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a href="/auth/register" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-user-plus mr-2"></i>Sign Up Free
+                    </a>
+                    <a href="/auth/login" class="flex-1 bg-transparent border border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white py-3 px-6 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login
+                    </a>
+                </div>
+
+                <button onclick="closeTaskLimitModal()" class="mt-4 text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times mr-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer-dark text-white py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-6 animate-fade-in">
+                <div class="w-12 h-12 feature-icon rounded-xl flex items-center justify-center mr-4 floating-element">
+                    <i class="fas fa-tasks text-white text-lg"></i>
+                </div>
+                <span class="text-2xl font-bold gradient-text">TaskBuddy</span>
+            </div>
+            <p class="text-gray-300 text-lg mb-4">Organize your life, one task at a time</p>
+            <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-6"></div>
+            <p class="text-gray-400 text-sm mb-4">© 2023 TaskBuddy. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Guest task management
+        const isLoggedIn = <%= typeof user !== 'undefined' && user ? 'true' : 'false' %>;
+        const MAX_GUEST_TASKS = 2;
+
+        // Get current task count from cookies (server-side tracking)
+        function getGuestTaskCount() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'guestTaskCount') {
+                    return parseInt(value || '0');
+                }
+            }
+            return 0;
+        }
+
+        // Set task count in localStorage (for client-side updates)
+        function setGuestTaskCount(count) {
+            localStorage.setItem('guestTaskCount', count.toString());
+            updateTaskCounter();
+        }
+
+        // Update the task counter display
+        function updateTaskCounter() {
+            const tasksRemaining = document.getElementById('tasks-remaining');
+            if (tasksRemaining && !isLoggedIn) {
+                const currentCount = getGuestTaskCount();
+                const remaining = Math.max(0, MAX_GUEST_TASKS - currentCount);
+                tasksRemaining.textContent = `${remaining} remaining`;
+
+                // Update warning banner visibility
+                const warningBanner = document.getElementById('guest-warning');
+                if (warningBanner) {
+                    if (remaining === 0) {
+                        warningBanner.classList.add('hidden');
+                    } else {
+                        warningBanner.classList.remove('hidden');
+                    }
+                }
+
+                // Update create button state
+                const createBtn = document.getElementById('create-task-btn');
+                if (createBtn && remaining === 0) {
+                    createBtn.disabled = true;
+                    createBtn.innerHTML = '<i class="fas fa-lock mr-3"></i>Task Limit Reached';
+                    createBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        // Show task limit modal
+        function showTaskLimitModal() {
+            const modal = document.getElementById('task-limit-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // Close task limit modal
+        function closeTaskLimitModal() {
+            const modal = document.getElementById('task-limit-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Handle form submission
+        function handleTaskFormSubmission(event) {
+            if (!isLoggedIn) {
+                const currentCount = getGuestTaskCount();
+
+                if (currentCount >= MAX_GUEST_TASKS) {
+                    event.preventDefault();
+                    showTaskLimitModal();
+                    return false;
+                }
+
+                // Show confirmation for last task
+                if (currentCount === MAX_GUEST_TASKS - 1) {
+                    const confirmed = confirm(
+                        `This will be your last free task! After this, you'll need to sign up to create more tasks.\n\nWould you like to continue?`
+                    );
+
+                    if (!confirmed) {
+                        event.preventDefault();
+                        return false;
+                    }
+                }
+
+                // Increment task count
+                setGuestTaskCount(currentCount + 1);
+            }
+
+            // Show loading state
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Creating Task...';
+            }
+
+            return true;
+        }
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour12: true,
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = timeString;
+            }
+        }
+
+        // Handle URL parameters for messages
+        function handleUrlMessages() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const successMessage = document.getElementById('success-message');
+            const errorMessage = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+
+            if (urlParams.has('success')) {
+                const success = urlParams.get('success');
+                if (success === 'task_created' && successMessage) {
+                    successMessage.classList.remove('hidden');
+                    // Auto-hide after 5 seconds
+                    setTimeout(() => {
+                        successMessage.style.opacity = '0';
+                        setTimeout(() => successMessage.classList.add('hidden'), 300);
+                    }, 5000);
+                }
+            }
+
+            if (urlParams.has('error')) {
+                const error = urlParams.get('error');
+                if (errorMessage && errorText) {
+                    let message = 'An error occurred while creating your task.';
+
+                    switch (error) {
+                        case 'task_limit_reached':
+                            message = 'You have reached the maximum of 2 tasks for guest users. Please sign up or log in to create unlimited tasks.';
+                            break;
+                        case 'creation_failed':
+                            message = 'Failed to create task. Please try again.';
+                            break;
+                    }
+
+                    errorText.textContent = message;
+                    errorMessage.classList.remove('hidden');
+
+                    // Auto-hide after 8 seconds
+                    setTimeout(() => {
+                        errorMessage.style.opacity = '0';
+                        setTimeout(() => errorMessage.classList.add('hidden'), 300);
+                    }, 8000);
+                }
+            }
+
+            // Clean URL after showing messages
+            if (urlParams.has('success') || urlParams.has('error')) {
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle URL messages
+            handleUrlMessages();
+
+            // Update time
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            // Initialize task counter for guests
+            if (!isLoggedIn) {
+                updateTaskCounter();
+            }
+
+            // Add form submission handler
+            const taskForm = document.getElementById('task-form');
+            if (taskForm) {
+                taskForm.addEventListener('submit', handleTaskFormSubmission);
+            }
+
+            // Close modal when clicking outside
+            const modal = document.getElementById('task-limit-modal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeTaskLimitModal();
+                    }
+                });
+            }
+
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+
+        // Expose functions globally
+        window.closeTaskLimitModal = closeTaskLimitModal;
+    </script>
 </body>
 
 </html>

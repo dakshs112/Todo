@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasks - Task Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-link:hover { background-color: rgba(99, 102, 241, 0.1); }
+        .sidebar-link.active { background-color: rgba(99, 102, 241, 0.2); border-right: 3px solid #6366f1; }
+        .form-input { background-color: rgba(31, 41, 55, 0.8); border: 1px solid rgba(75, 85, 99, 0.5); color: white; }
+        .form-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .focus-ring:focus { outline: none; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); }
+    </style>
+
+    <script>
+        // Define global functions immediately
+        function viewTask(taskId) {
+            console.log('Viewing task:', taskId);
+            fetch('/api/v1/tasks/' + taskId, {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Task data:', data);
+                if (data.success) {
+                    const task = data.data;
+                    const info = 'Task: ' + task.title + '\nDescription: ' + (task.description || 'No description') + '\nStatus: ' + task.status + '\nPriority: ' + task.priority + '\nDue Date: ' + (task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set') + '\nAssigned To: ' + (task.assignedTo ? task.assignedTo.name : 'Unassigned');
+                    alert(info);
+                } else {
+                    alert('Error loading task details: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading task details');
+            });
+        }
+
+        function editTask(taskId) {
+            console.log('Editing task:', taskId);
+            const newStatus = prompt('Enter new status (todo, in_progress, review, completed, cancelled):');
+            if (newStatus && ['todo', 'in_progress', 'review', 'completed', 'cancelled'].includes(newStatus)) {
+                fetch('/api/v1/tasks/' + taskId, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Update response:', data);
+                    if (data.success) {
+                        alert('Task updated successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error updating task: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error updating task');
+                });
+            } else if (newStatus !== null) {
+                alert('Invalid status. Please use: todo, in_progress, review, completed, or cancelled');
+            }
+        }
+
+        // Modal functions
+        function openTaskModal() {
+            console.log('Opening task modal');
+            const modal = document.getElementById('addTaskModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeTaskModal() {
+            console.log('Closing task modal');
+            const modal = document.getElementById('addTaskModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Create task function
+        function createTask() {
+            console.log('Creating task...');
+
+            const title = document.getElementById('taskTitle').value.trim();
+            const description = document.getElementById('taskDescription').value.trim();
+            const project = document.getElementById('taskProject').value;
+            const priority = document.getElementById('taskPriority').value;
+            const dueDate = document.getElementById('taskDueDate').value;
+            const submitBtn = document.getElementById('createTaskBtn');
+
+            if (!title) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+
+            const taskData = {
+                title: title,
+                description: description,
+                priority: priority
+            };
+
+            if (project) {
+                taskData.project = project;
+            }
+
+            if (dueDate) {
+                taskData.dueDate = dueDate;
+            }
+
+            fetch('/api/v1/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(taskData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Task response:', data);
+                if (data.success) {
+                    alert('Task created successfully!');
+                    closeTaskModal();
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.error || data.message || 'Failed to create task'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Network error. Please try again.');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Add Task';
+            });
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-800 shadow-lg">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-indigo-400">TaskFlow</h1>
+                <p class="text-gray-400 text-sm mt-1">Welcome, <%= user.name %></p>
+            </div>
+            
+            <nav class="mt-6">
+                <a href="/dashboard" class="sidebar-link flex items-center px-6 py-3 text-gray-300 hover:text-white transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                <a href="/teams" class="sidebar-link flex items-center px-6 py-3 text-gray-300 hover:text-white transition-colors">
+                    <i class="fas fa-users mr-3"></i>
+                    Teams
+                </a>
+                <a href="/projects" class="sidebar-link flex items-center px-6 py-3 text-gray-300 hover:text-white transition-colors">
+                    <i class="fas fa-folder mr-3"></i>
+                    Projects
+                </a>
+                <a href="/tasks" class="sidebar-link active flex items-center px-6 py-3 text-gray-300 hover:text-white transition-colors">
+                    <i class="fas fa-tasks mr-3"></i>
+                    Tasks
+                </a>
+                <a href="/logout" class="sidebar-link flex items-center px-6 py-3 text-gray-300 hover:text-white transition-colors mt-8">
+                    <i class="fas fa-sign-out-alt mr-3"></i>
+                    Logout
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-hidden">
+            <!-- Header -->
+            <header class="bg-gray-800 shadow-sm border-b border-gray-700">
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-semibold text-white">Tasks</h2>
+                        <button type="button" onclick="document.getElementById('addTaskModal').style.display='flex'" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Add Task
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <% if (tasks && tasks.length > 0) { %>
+                        <% tasks.forEach(task => { %>
+                            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-indigo-500 transition-colors">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center">
+                                        <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center mr-4">
+                                            <i class="fas fa-tasks text-green-400 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-white"><%= task.title %></h3>
+                                            <p class="text-gray-400 text-sm">
+                                                <% if (task.project && task.project.title) { %>
+                                                    <i class="fas fa-folder mr-1"></i><%= task.project.title %>
+                                                <% } else { %>
+                                                    <i class="fas fa-user mr-1"></i>Personal Task
+                                                <% } %>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs px-2 py-1 bg-<%= task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'yellow' : 'green' %>-500 bg-opacity-20 text-<%= task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'yellow' : 'green' %>-400 rounded-full">
+                                            <%= task.priority %>
+                                        </span>
+                                        <span class="text-xs px-2 py-1 bg-<%= task.status === 'completed' ? 'green' : task.status === 'in_progress' ? 'blue' : 'gray' %>-500 bg-opacity-20 text-<%= task.status === 'completed' ? 'green' : task.status === 'in_progress' ? 'blue' : 'gray' %>-400 rounded-full">
+                                            <%= task.status.replace('_', ' ') %>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <% if (task.description) { %>
+                                    <p class="text-gray-300 text-sm mb-4"><%= task.description %></p>
+                                <% } %>
+                                
+                                <div class="flex items-center justify-between text-gray-400 text-sm">
+                                    <div class="flex items-center">
+                                        <% if (task.assignedTo && task.assignedTo.name) { %>
+                                            <i class="fas fa-user mr-2"></i>
+                                            <%= task.assignedTo.name %>
+                                        <% } else { %>
+                                            <i class="fas fa-user-slash mr-2"></i>
+                                            Unassigned
+                                        <% } %>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button onclick="viewTask('<%= task._id %>')" class="text-gray-400 hover:text-white transition-colors">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <% if (task.assignedTo && task.assignedTo._id.toString() === user.id || task.createdBy && task.createdBy._id.toString() === user.id) { %>
+                                            <button onclick="editTask('<%= task._id %>')" class="text-indigo-400 hover:text-indigo-300 transition-colors">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <% if (task.dueDate) { %>
+                                    <div class="mt-4 pt-4 border-t border-gray-700">
+                                        <div class="flex items-center text-gray-400 text-sm">
+                                            <i class="fas fa-calendar mr-2"></i>
+                                            Due: <%= new Date(task.dueDate).toLocaleDateString() %>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="col-span-full text-center py-12">
+                            <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-tasks text-gray-500 text-3xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-300 mb-2">No tasks yet</h3>
+                            <p class="text-gray-500 mb-6">Create your first task to get started</p>
+                            <button type="button" onclick="document.getElementById('addTaskModal').style.display='flex'" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Create Your First Task
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-xl p-8 w-full max-w-md mx-4 border border-gray-700">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-white">Add New Task</h3>
+                <button type="button" id="closeTaskModalBtn" onclick="closeTaskModal()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">Task Title</label>
+                        <input type="text" id="taskTitle" name="title" required
+                               class="w-full px-4 py-3 form-input rounded-xl focus-ring"
+                               placeholder="Enter task title">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">Description (Optional)</label>
+                        <textarea id="taskDescription" name="description" rows="3"
+                                  class="w-full px-4 py-3 form-input rounded-xl focus-ring"
+                                  placeholder="Describe the task"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-200 mb-2">Project (Optional)</label>
+                        <select id="taskProject" name="project" class="w-full px-4 py-3 form-input rounded-xl focus-ring">
+                            <option value="">Select a project</option>
+                            <% projects.forEach(project => { %>
+                                <option value="<%= project._id %>"><%= project.title %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-200 mb-2">Priority</label>
+                            <select id="taskPriority" name="priority" class="w-full px-4 py-3 form-input rounded-xl focus-ring">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-200 mb-2">Due Date (Optional)</label>
+                            <input type="date" id="taskDueDate" name="dueDate"
+                                   class="w-full px-4 py-3 form-input rounded-xl focus-ring">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-4 mt-8">
+                    <button type="button" onclick="
+                        var modal = document.getElementById('addTaskModal');
+                        if (modal) {
+                            modal.style.display = 'none';
+                            modal.classList.add('hidden');
+                            modal.classList.remove('flex');
+                        }
+                    " class="flex-1 px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-700 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" id="createTaskBtn" onclick="createTask()" class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors">
+                        Add Task
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+    </script>
+
+    <script>
+        function showTaskModal() {
+            console.log('showTaskModal called');
+            const modal = document.getElementById('addTaskModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function hideTaskModal() {
+            console.log('hideTaskModal called');
+            const modal = document.getElementById('addTaskModal');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function submitTask() {
+            console.log('submitTask called');
+            const titleInput = document.getElementById('taskTitle');
+            const descInput = document.getElementById('taskDescription');
+            const projectInput = document.getElementById('taskProject');
+            const priorityInput = document.getElementById('taskPriority');
+            const dueDateInput = document.getElementById('taskDueDate');
+
+            if (!titleInput) {
+                alert('Form elements not found');
+                return;
+            }
+
+            const title = titleInput.value.trim();
+            const description = descInput ? descInput.value.trim() : '';
+            const project = projectInput ? projectInput.value : '';
+            const priority = priorityInput ? priorityInput.value : 'medium';
+            const dueDate = dueDateInput ? dueDateInput.value : '';
+
+            if (!title) {
+                alert('Please enter task title');
+                return;
+            }
+
+            const data = {title, description, priority};
+            if (project) data.project = project;
+            if (dueDate) data.dueDate = dueDate;
+
+            console.log('Submitting task:', data);
+
+            fetch('/api/v1/tasks', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    alert('Task created successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.error || data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                alert('Network error: ' + error.message);
+            });
+        }
+
+        // Logout function
+        function logoutUser() {
+            console.log('Logout function called');
+
+            // Try multiple logout methods
+            fetch('/api/v1/auth/logout', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => {
+                console.log('API logout response:', response.status);
+                // Regardless of API response, redirect to logout page
+                window.location.href = '/auth/logout';
+            })
+            .catch(error => {
+                console.log('API logout failed, using direct logout:', error);
+                // If API fails, use direct logout
+                window.location.href = '/auth/logout';
+            });
+        }
+    </script>
+
+</body>
+</html>

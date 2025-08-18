@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskBuddy - Login</title>
+    <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer-when-downgrade"></script>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-in-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'bounce-in': 'bounceIn 0.8s ease-out',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Enhanced styles for login page */
+        .login-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            backdrop-filter: blur(20px);
+        }
+        
+        .login-container:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-glow);
+        }
+        
+        .auth-link {
+            color: var(--accent-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .auth-link:hover {
+            color: var(--accent-secondary);
+            text-decoration: underline;
+        }
+        
+        .social-button {
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .social-button:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-card);
+            transform: translateY(-2px);
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+        
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+        }
+    </style>
+</head>
+
+<body class="font-inter">
+    <!-- Background -->
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Login Card -->
+        <div class="max-w-md w-full space-y-8 animate-fade-in">
+            <!-- Header -->
+            <div class="text-center">
+                <div class="flex justify-center mb-6">
+                    <div class="w-16 h-16 feature-icon rounded-2xl flex items-center justify-center floating-element">
+                        <i class="fas fa-tasks text-white text-2xl"></i>
+                    </div>
+                </div>
+                <h2 class="text-4xl font-bold text-white mb-2">Welcome Back</h2>
+                <p class="text-gray-300 text-lg">Sign in to your TaskBuddy account</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="login-container rounded-3xl p-8 shadow-modern-xl glow-on-hover animate-slide-up">
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="error-message rounded-xl p-4 mb-6 animate-bounce-in">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-3 text-red-400"></i>
+                            <span><%= error %></span>
+                        </div>
+                    </div>
+                <% } %>
+
+                <% if (typeof success !== 'undefined' && success) { %>
+                    <div class="success-message rounded-xl p-4 mb-6 animate-bounce-in">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-3 text-green-400"></i>
+                            <span><%= success %></span>
+                        </div>
+                    </div>
+                <% } %>
+
+                <form action="/auth/login" method="POST" class="space-y-6">
+                    <div class="animate-slide-up" style="animation-delay: 0.1s;">
+                        <label for="email" class="block text-sm font-semibold text-gray-200 mb-3">
+                            <i class="fas fa-envelope mr-2 text-blue-400"></i>Email Address
+                        </label>
+                        <input 
+                            id="email"
+                            name="email" 
+                            type="email" 
+                            required 
+                            class="w-full px-5 py-4 form-input rounded-xl focus-ring text-lg font-medium"
+                            placeholder="Enter your email address"
+                            value="<%= typeof formData !== 'undefined' ? formData.email || '' : '' %>"
+                        >
+                    </div>
+
+                    <div class="animate-slide-up" style="animation-delay: 0.2s;">
+                        <label for="password" class="block text-sm font-semibold text-gray-200 mb-3">
+                            <i class="fas fa-lock mr-2 text-purple-400"></i>Password
+                        </label>
+                        <div class="relative">
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                required
+                                class="w-full px-5 py-4 form-input rounded-xl focus-ring text-lg font-medium pr-12"
+                                placeholder="Enter your password"
+                            >
+                            <button
+                                type="button"
+                                id="toggle-password"
+                                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <i id="password-icon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between animate-slide-up" style="animation-delay: 0.3s;">
+                        <div class="flex items-center">
+                            <input 
+                                id="remember-me" 
+                                name="remember" 
+                                type="checkbox" 
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded bg-gray-700"
+                            >
+                            <label for="remember-me" class="ml-2 block text-sm text-gray-300">
+                                Remember me
+                            </label>
+                        </div>
+                        <div class="text-sm">
+                            <a href="/auth/forgot-password" class="auth-link font-medium">
+                                Forgot your password?
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="animate-slide-up" style="animation-delay: 0.4s;">
+                        <button 
+                            type="submit" 
+                            class="w-full btn-primary text-white py-4 px-8 rounded-xl font-bold text-lg shadow-modern-lg glow-on-hover transition-all duration-300"
+                        >
+                            <i class="fas fa-sign-in-alt mr-3"></i>Sign In
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Divider -->
+                <div class="mt-8 animate-slide-up" style="animation-delay: 0.5s;">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-600"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-4 bg-transparent text-gray-400 font-medium">Or continue with</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Login -->
+                <div class="mt-6 grid grid-cols-2 gap-3 animate-slide-up" style="animation-delay: 0.6s;">
+                    <button class="social-button w-full inline-flex justify-center py-3 px-4 rounded-xl shadow-sm text-sm font-medium text-gray-300 interactive-hover">
+                        <i class="fab fa-google text-lg"></i>
+                        <span class="ml-2">Google</span>
+                    </button>
+                    <button class="social-button w-full inline-flex justify-center py-3 px-4 rounded-xl shadow-sm text-sm font-medium text-gray-300 interactive-hover">
+                        <i class="fab fa-github text-lg"></i>
+                        <span class="ml-2">GitHub</span>
+                    </button>
+                </div>
+
+                <!-- Sign Up Link -->
+                <div class="mt-8 text-center animate-slide-up" style="animation-delay: 0.7s;">
+                    <p class="text-gray-400">
+                        Don't have an account? 
+                        <a href="/auth/register" class="auth-link font-semibold">
+                            Sign up here
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center animate-fade-in" style="animation-delay: 0.8s;">
+                <p class="text-gray-500 text-sm">
+                    © 2023 TaskBuddy. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password toggle functionality
+            const togglePasswordBtn = document.getElementById('toggle-password');
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.getElementById('password-icon');
+
+            if (togglePasswordBtn && passwordInput && passwordIcon) {
+                togglePasswordBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        passwordIcon.classList.remove('fa-eye');
+                        passwordIcon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordInput.type = 'password';
+                        passwordIcon.classList.remove('fa-eye-slash');
+                        passwordIcon.classList.add('fa-eye');
+                    }
+                });
+            }
+
+            // Form submission handling
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Signing In...';
+                    }
+                });
+            }
+
+            // Auto-hide messages after 5 seconds
+            setTimeout(() => {
+                const messages = document.querySelectorAll('.error-message, .success-message');
+                messages.forEach(message => {
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateY(-10px)';
+                    setTimeout(() => message.remove(), 300);
+                });
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

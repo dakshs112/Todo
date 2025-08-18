@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskBuddy - Register</title>
+    <script src="https://cdn.tailwindcss.com" referrerpolicy="no-referrer-when-downgrade"></script>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-in-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'bounce-in': 'bounceIn 0.8s ease-out',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Enhanced styles for register page */
+        .register-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            backdrop-filter: blur(20px);
+        }
+        
+        .register-container:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-glow);
+        }
+        
+        .role-card {
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border-primary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .role-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+        
+        .role-card.selected {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .strength-weak { background: #ef4444; }
+        .strength-medium { background: #f59e0b; }
+        .strength-strong { background: #10b981; }
+    </style>
+</head>
+
+<body class="font-inter">
+    <!-- Background -->
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Register Card -->
+        <div class="max-w-lg w-full space-y-8 animate-fade-in">
+            <!-- Header -->
+            <div class="text-center">
+                <div class="flex justify-center mb-6">
+                    <div class="w-16 h-16 feature-icon rounded-2xl flex items-center justify-center floating-element">
+                        <i class="fas fa-user-plus text-white text-2xl"></i>
+                    </div>
+                </div>
+                <h2 class="text-4xl font-bold text-white mb-2">Join TaskBuddy</h2>
+                <p class="text-gray-300 text-lg">Create your account and start organizing</p>
+            </div>
+
+            <!-- Register Form -->
+            <div class="register-container rounded-3xl p-8 shadow-modern-xl glow-on-hover animate-slide-up">
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="error-message rounded-xl p-4 mb-6 animate-bounce-in">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-3 text-red-400"></i>
+                            <span><%= error %></span>
+                        </div>
+                    </div>
+                <% } %>
+
+                <form action="/auth/register" method="POST" class="space-y-6">
+                    <div class="animate-slide-up" style="animation-delay: 0.1s;">
+                        <label for="name" class="block text-sm font-semibold text-gray-200 mb-3">
+                            <i class="fas fa-user mr-2 text-green-400"></i>Full Name
+                        </label>
+                        <input 
+                            id="name"
+                            name="name" 
+                            type="text" 
+                            required 
+                            class="w-full px-5 py-4 form-input rounded-xl focus-ring text-lg font-medium"
+                            placeholder="Enter your full name"
+                            value="<%= typeof formData !== 'undefined' ? formData.name || '' : '' %>"
+                        >
+                    </div>
+
+                    <div class="animate-slide-up" style="animation-delay: 0.2s;">
+                        <label for="email" class="block text-sm font-semibold text-gray-200 mb-3">
+                            <i class="fas fa-envelope mr-2 text-blue-400"></i>Email Address
+                        </label>
+                        <input 
+                            id="email"
+                            name="email" 
+                            type="email" 
+                            required 
+                            class="w-full px-5 py-4 form-input rounded-xl focus-ring text-lg font-medium"
+                            placeholder="Enter your email address"
+                            value="<%= typeof formData !== 'undefined' ? formData.email || '' : '' %>"
+                        >
+                    </div>
+
+                    <div class="animate-slide-up" style="animation-delay: 0.3s;">
+                        <label for="password" class="block text-sm font-semibold text-gray-200 mb-3">
+                            <i class="fas fa-lock mr-2 text-purple-400"></i>Password
+                        </label>
+                        <div class="relative">
+                            <input 
+                                id="password"
+                                name="password" 
+                                type="password" 
+                                required 
+                                class="w-full px-5 py-4 form-input rounded-xl focus-ring text-lg font-medium pr-12"
+                                placeholder="Create a strong password"
+                                onkeyup="checkPasswordStrength()"
+                            >
+                            <button
+                                type="button"
+                                id="toggle-password"
+                                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <i id="password-icon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <div id="password-strength" class="password-strength w-full"></div>
+                            <p id="password-text" class="text-xs text-gray-400 mt-1">Password strength</p>
+                        </div>
+                    </div>
+
+                    <div class="animate-slide-up" style="animation-delay: 0.4s;">
+                        <label for="confirmPassword" class="block text-sm font-semibold text-gray-200 mb-3">
+                            <i class="fas fa-lock mr-2 text-purple-400"></i>Confirm Password
+                        </label>
+                        <div class="relative">
+                            <input 
+                                id="confirmPassword"
+                                name="confirmPassword" 
+                                type="password" 
+                                required 
+                                class="w-full px-5 py-4 form-input rounded-xl focus-ring text-lg font-medium pr-12"
+                                placeholder="Confirm your password"
+                                onkeyup="checkPasswordMatch()"
+                            >
+                            <button
+                                type="button"
+                                id="toggle-confirm-password"
+                                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <i id="confirmPassword-icon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <p id="password-match" class="text-xs mt-1 hidden"></p>
+                    </div>
+
+                    <div class="animate-slide-up" style="animation-delay: 0.5s;">
+                        <label class="block text-sm font-semibold text-gray-200 mb-4">
+                            <i class="fas fa-briefcase mr-2 text-yellow-400"></i>Select Your Role
+                        </label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="role-card p-4 rounded-xl selected" data-role="employee">
+                                <input type="radio" name="role" value="employee" id="role-employee" class="hidden" checked>
+                                <div class="text-center">
+                                    <i class="fas fa-user text-2xl text-blue-400 mb-2"></i>
+                                    <h4 class="font-semibold text-white">Employee</h4>
+                                    <p class="text-xs text-gray-400">Team member</p>
+                                </div>
+                            </div>
+                            <div class="role-card p-4 rounded-xl" data-role="team_manager">
+                                <input type="radio" name="role" value="team_manager" id="role-manager" class="hidden">
+                                <div class="text-center">
+                                    <i class="fas fa-users text-2xl text-green-400 mb-2"></i>
+                                    <h4 class="font-semibold text-white">Manager</h4>
+                                    <p class="text-xs text-gray-400">Team leader</p>
+                                </div>
+                            </div>
+                            <div class="role-card p-4 rounded-xl" data-role="client">
+                                <input type="radio" name="role" value="client" id="role-client" class="hidden">
+                                <div class="text-center">
+                                    <i class="fas fa-handshake text-2xl text-purple-400 mb-2"></i>
+                                    <h4 class="font-semibold text-white">Client</h4>
+                                    <p class="text-xs text-gray-400">External user</p>
+                                </div>
+                            </div>
+                            <div class="role-card p-4 rounded-xl" data-role="admin">
+                                <input type="radio" name="role" value="admin" id="role-admin" class="hidden">
+                                <div class="text-center">
+                                    <i class="fas fa-crown text-2xl text-yellow-400 mb-2"></i>
+                                    <h4 class="font-semibold text-white">Admin</h4>
+                                    <p class="text-xs text-gray-400">Full access</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center animate-slide-up" style="animation-delay: 0.6s;">
+                        <input 
+                            id="terms" 
+                            name="terms" 
+                            type="checkbox" 
+                            required
+                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded bg-gray-700"
+                        >
+                        <label for="terms" class="ml-2 block text-sm text-gray-300">
+                            I agree to the 
+                            <a href="/terms" class="auth-link font-medium">Terms of Service</a> 
+                            and 
+                            <a href="/privacy" class="auth-link font-medium">Privacy Policy</a>
+                        </label>
+                    </div>
+
+                    <div class="animate-slide-up" style="animation-delay: 0.7s;">
+                        <button 
+                            type="submit" 
+                            id="submit-btn"
+                            class="w-full btn-primary text-white py-4 px-8 rounded-xl font-bold text-lg shadow-modern-lg glow-on-hover transition-all duration-300"
+                            disabled
+                        >
+                            <i class="fas fa-user-plus mr-3"></i>Create Account
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Sign In Link -->
+                <div class="mt-8 text-center animate-slide-up" style="animation-delay: 0.8s;">
+                    <p class="text-gray-400">
+                        Already have an account? 
+                        <a href="/auth/login" class="auth-link font-semibold">
+                            Sign in here
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center animate-fade-in" style="animation-delay: 0.9s;">
+                <p class="text-gray-500 text-sm">
+                    © 2023 TaskBuddy. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password toggle functionality
+            const togglePasswordBtn = document.getElementById('toggle-password');
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.getElementById('password-icon');
+
+            const toggleConfirmPasswordBtn = document.getElementById('toggle-confirm-password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const confirmPasswordIcon = document.getElementById('confirmPassword-icon');
+
+            // Password toggle
+            if (togglePasswordBtn && passwordInput && passwordIcon) {
+                togglePasswordBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        passwordIcon.classList.remove('fa-eye');
+                        passwordIcon.classList.add('fa-eye-slash');
+                    } else {
+                        passwordInput.type = 'password';
+                        passwordIcon.classList.remove('fa-eye-slash');
+                        passwordIcon.classList.add('fa-eye');
+                    }
+                });
+            }
+
+            // Confirm password toggle
+            if (toggleConfirmPasswordBtn && confirmPasswordInput && confirmPasswordIcon) {
+                toggleConfirmPasswordBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    if (confirmPasswordInput.type === 'password') {
+                        confirmPasswordInput.type = 'text';
+                        confirmPasswordIcon.classList.remove('fa-eye');
+                        confirmPasswordIcon.classList.add('fa-eye-slash');
+                    } else {
+                        confirmPasswordInput.type = 'password';
+                        confirmPasswordIcon.classList.remove('fa-eye-slash');
+                        confirmPasswordIcon.classList.add('fa-eye');
+                    }
+                });
+            }
+
+            // Role selection functionality
+            const roleCards = document.querySelectorAll('.role-card');
+            roleCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selected class from all cards
+                    roleCards.forEach(c => c.classList.remove('selected'));
+
+                    // Add selected class to clicked card
+                    this.classList.add('selected');
+
+                    // Get the role value and check the corresponding radio button
+                    const role = this.getAttribute('data-role');
+                    const radioButton = document.getElementById('role-' + (role === 'team_manager' ? 'manager' : role));
+                    if (radioButton) {
+                        radioButton.checked = true;
+                    }
+
+                    validateForm();
+                });
+            });
+
+            // Password strength checking
+            function checkPasswordStrength() {
+                const password = passwordInput.value;
+                const strengthBar = document.getElementById('password-strength');
+                const strengthText = document.getElementById('password-text');
+
+                let strength = 0;
+                let text = '';
+
+                if (password.length >= 8) strength++;
+                if (/[a-z]/.test(password)) strength++;
+                if (/[A-Z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+                switch (strength) {
+                    case 0:
+                    case 1:
+                    case 2:
+                        strengthBar.className = 'password-strength w-full strength-weak';
+                        text = 'Weak password';
+                        break;
+                    case 3:
+                    case 4:
+                        strengthBar.className = 'password-strength w-full strength-medium';
+                        text = 'Medium password';
+                        break;
+                    case 5:
+                        strengthBar.className = 'password-strength w-full strength-strong';
+                        text = 'Strong password';
+                        break;
+                }
+
+                strengthText.textContent = text;
+                checkPasswordMatch();
+                validateForm();
+            }
+
+            // Password match checking
+            function checkPasswordMatch() {
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                const matchText = document.getElementById('password-match');
+
+                if (confirmPassword.length > 0) {
+                    if (password === confirmPassword) {
+                        matchText.textContent = 'Passwords match';
+                        matchText.className = 'text-xs mt-1 text-green-400';
+                        matchText.classList.remove('hidden');
+                    } else {
+                        matchText.textContent = 'Passwords do not match';
+                        matchText.className = 'text-xs mt-1 text-red-400';
+                        matchText.classList.remove('hidden');
+                    }
+                } else {
+                    matchText.classList.add('hidden');
+                }
+
+                validateForm();
+            }
+
+            // Form validation
+            function validateForm() {
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                const terms = document.getElementById('terms').checked;
+                const submitBtn = document.getElementById('submit-btn');
+
+                const isValid = name.length > 0 &&
+                               email.length > 0 &&
+                               password.length >= 6 &&
+                               password === confirmPassword &&
+                               terms;
+
+                if (submitBtn) {
+                    submitBtn.disabled = !isValid;
+                    submitBtn.style.opacity = isValid ? '1' : '0.5';
+                }
+            }
+
+            // Add event listeners
+            if (passwordInput) {
+                passwordInput.addEventListener('input', checkPasswordStrength);
+            }
+
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+            }
+
+            const nameInput = document.getElementById('name');
+            if (nameInput) {
+                nameInput.addEventListener('input', validateForm);
+            }
+
+            const emailInput = document.getElementById('email');
+            if (emailInput) {
+                emailInput.addEventListener('input', validateForm);
+            }
+
+            const termsCheckbox = document.getElementById('terms');
+            if (termsCheckbox) {
+                termsCheckbox.addEventListener('change', validateForm);
+            }
+
+            // Form submission
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = document.getElementById('submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Creating Account...';
+                    }
+                });
+            }
+
+            // Initial validation
+            validateForm();
+        });
+    </script>
+</body>
+</html>

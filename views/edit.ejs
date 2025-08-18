@@ -4,26 +4,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>TaskBuddy - Edit Task</title>
     <link rel="stylesheet" href="/stylesheets/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Enhanced dark theme styles for edit page */
+        .edit-form-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            backdrop-filter: blur(20px);
+        }
+
+        .edit-form-container:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .save-button {
+            background: linear-gradient(135deg, var(--accent-success) 0%, #059669 100%);
+        }
+
+        .save-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .cancel-button {
+            background: linear-gradient(135deg, var(--border-secondary) 0%, var(--border-primary) 100%);
+        }
+
+        .cancel-button:hover {
+            background: linear-gradient(135deg, var(--accent-warning) 0%, #d97706 100%);
+        }
+    </style>
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+        }
+    </style>
 </head>
 
-<body>
-    <div class="main w-full min-h-screen bg-zinc-900 p-8">
-        <a href="/" class="text-blue-600 inline-block mb-10">Go back to home page</a>
-        <form action="/edit" method="post">
-            <input class=" block px-5 py-3 bg-zinc-800 w-full rounded-md text-zinc-600 " type="text"
-                placeholder="Your previous title" name="previous" value="<%=filename%>" readonly>
-             <input class="block px-5 py-3 bg-zinc-800 w-full rounded-md text-zinc-600 mt-5" type="text"
-                placeholder="New title" name="new">
-            <input class="mt-5 bg-yellow-800 rounded-md px-3 py-2" type="submit" placeholder="Create Task">
+<body class="font-inter">
+    <!-- Header -->
+    <header class="header-gradient text-white py-6 shadow-modern-xl backdrop-blur-strong">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4 animate-slide-in-left">
+                    <div class="w-12 h-12 feature-icon rounded-xl flex items-center justify-center floating-element">
+                        <i class="fas fa-tasks text-xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold gradient-text">TaskBuddy</h1>
+                        <p class="text-sm text-blue-200 opacity-90">Edit Task</p>
+                    </div>
+                </div>
+                <a href="/" class="flex items-center text-white hover:text-blue-200 transition-all duration-300 interactive-hover animate-slide-in-right">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    <span class="hidden sm:inline font-medium">Back to Tasks</span>
+                </a>
+            </div>
+        </div>
+    </header>
 
-        </form>
+    <!-- Main Content -->
+    <div class="main-content py-12">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="animate-fade-in">
+                <!-- Edit Form -->
+                <div class="edit-form-container rounded-3xl p-10 shadow-modern-xl glow-on-hover">
+                    <div class="flex items-center mb-10">
+                        <div class="w-16 h-16 feature-icon rounded-2xl flex items-center justify-center mr-6 floating-element">
+                            <i class="fas fa-edit text-white text-2xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-bold text-white mb-2">Edit Task</h2>
+                            <p class="text-gray-300 text-lg">Update your task information</p>
+                        </div>
+                    </div>
+
+                    <form action="/edit" method="post" class="space-y-8">
+                        <div class="animate-slide-up" style="animation-delay: 0.1s;">
+                            <label class="block text-sm font-semibold text-gray-200 mb-3">
+                                <i class="fas fa-heading mr-2 text-blue-400"></i>Current Title
+                            </label>
+                            <input
+                                class="w-full px-5 py-4 bg-gray-700 border border-gray-600 rounded-xl text-gray-300 cursor-not-allowed text-lg"
+                                type="text"
+                                name="previous"
+                                value="<%= filename %>"
+                                readonly
+                            >
+                            <p class="text-sm text-gray-400 mt-2">This is the current title (read-only)</p>
+                        </div>
+
+                        <div class="animate-slide-up" style="animation-delay: 0.2s;">
+                            <label class="block text-sm font-semibold text-gray-200 mb-3">
+                                <i class="fas fa-edit mr-2 text-purple-400"></i>New Title
+                            </label>
+                            <input
+                                class="w-full px-5 py-4 form-input rounded-xl focus-ring text-lg font-medium"
+                                type="text"
+                                placeholder="Enter the new title for your task"
+                                name="new"
+                                required
+                            >
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-center justify-between pt-8 border-t border-gray-600 space-y-4 sm:space-y-0 sm:space-x-6 animate-slide-up" style="animation-delay: 0.3s;">
+                            <a href="/" class="w-full sm:w-auto flex items-center justify-center px-8 py-4 cancel-button text-white rounded-xl transition-all duration-300 font-semibold text-lg interactive-hover">
+                                <i class="fas fa-times mr-3"></i>
+                                Cancel
+                            </a>
+                            <button
+                                type="submit"
+                                class="w-full sm:w-auto flex items-center justify-center px-8 py-4 save-button text-white rounded-xl font-bold text-lg transition-all duration-300 glow-on-hover"
+                            >
+                                <i class="fas fa-save mr-3"></i>Update Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Info Card -->
+                <div class="content-card rounded-2xl p-8 mt-10 animate-bounce-in">
+                    <div class="flex items-start">
+                        <div class="w-12 h-12 feature-icon rounded-xl flex items-center justify-center mr-5 mt-1">
+                            <i class="fas fa-info text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-3">About Task Editing</h3>
+                            <p class="text-gray-300 leading-relaxed text-lg">
+                                You can only change the title of your task. The task content remains the same.
+                                If you need to modify the task details, you'll need to delete and recreate the task.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-
-    <script src="/javascripts/script.js"></script>
+    <!-- Footer -->
+    <footer class="footer-dark text-white py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-6 animate-fade-in">
+                <div class="w-12 h-12 feature-icon rounded-xl flex items-center justify-center mr-4 floating-element">
+                    <i class="fas fa-tasks text-white text-lg"></i>
+                </div>
+                <span class="text-2xl font-bold gradient-text">TaskBuddy</span>
+            </div>
+            <p class="text-gray-300 text-lg mb-4">Organize your life, one task at a time</p>
+            <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mb-6"></div>
+            <p class="text-gray-500 text-sm">Built with ❤️ for productivity enthusiasts</p>
+        </div>
+    </footer>
 </body>
 
 </html>
